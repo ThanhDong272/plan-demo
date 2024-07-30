@@ -1,0 +1,27 @@
+{
+  "home": {
+    "welcome": "Willkommen, {{name}}!",
+    "done_process": "Erledigt zu {{percent}}%",
+    "in_progress": "Im Gange",
+    "open": "Offen",
+    "overview_your_training": "Überblick über deine Trainingspläne",
+    "value_of": "{{value1}} von {{value2}}"
+  },
+  "upload_plan": {
+    "enter_title": "Hier Titel eingeben",
+    "format_date": "TT.MM.JJJJ",
+    "upload_your_training": "Lade hier deinen Trainingsplan hoch",
+    "uploading": "Wird hochgeladen...",
+    "your_training_plan": "Dein Trainingsplan"
+  },
+  "action": {
+    "upload_new_training": "Neuen Trainingsplan hochladen",
+    "set_date": "Datum festlegen",
+    "tap_to_upload": "Hier tippen zum Hochladen",
+    "delete_plan": "Plan löschen",
+    "update": "Ersetzen",
+    "delete": "Löschen",
+    "documents": "Dokumente",
+    "gallery": "Galerie"
+  }
+}

@@ -1,0 +1,769 @@
+openapi: 3.0.0
+info:
+  title: 'React Native Exercise API Documentation'
+  description: 'React Native Exercise API Documentation'
+  contact:
+    email: office@nxtyou.de
+  version: 1.0.0
+servers:
+  -
+    url: 'http://my-default-host.com'
+    description: 'React Native Exercise API Server'
+paths:
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: 'Logs a user in'
+      operationId: login
+      requestBody:
+        description: 'User credentials'
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+              type: object
+      responses:
+        201:
+          description: 'Successfully logged in'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    required:
+                      - accessToken
+                      - tokenType
+                      - expiresAt
+                    properties:
+                      accessToken:
+                        type: string
+                        example: 3|AygePTpVAwsb6futGQd06h6EcULeqVK55ILEcrky8d6eccb2
+                      tokenType:
+                        type: string
+                        example: Bearer
+                      expiresAt:
+                        type: string
+                        format: date-time
+                        example: '2024-05-12T19:11:20Z'
+                      isPersonalInfoCompleted:
+                        type: boolean
+                        example: true
+                    type: object
+                type: object
+        422:
+          description: 'Invalid input data'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    example: 'The email field is required. (and 1 more error)'
+                  errors:
+                    properties:
+                      email:
+                        type: array
+                        items:
+                          type: string
+                          example: 'The email field is required.'
+                      password:
+                        type: array
+                        items:
+                          type: string
+                          example: 'The password field is required.'
+                    type: object
+                type: object
+        401:
+          $ref: '#/components/responses/unauthenticated'
+  /plan:
+    get:
+      tags:
+        - Plan
+      summary: 'Retrieve plans'
+      operationId: getPlans
+      parameters:
+        -
+          name: page
+          in: query
+          description: 'Page number'
+          required: false
+          schema:
+            type: integer
+            format: int32
+        -
+          name: perPage
+          in: query
+          description: 'Checklist per page'
+          required: false
+          schema:
+            type: integer
+            format: int32
+        -
+          name: include
+          in: query
+          description: 'Include related documents'
+          required: false
+          schema:
+            enum:
+              - documents
+      responses:
+        200:
+          description: 'Successful operation'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                  - links
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/planData'
+                  included:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/planDocumentData'
+                  links:
+                    $ref: '#/components/schemas/links'
+                  meta:
+                    $ref: '#/components/schemas/meta'
+                type: object
+      security:
+        -
+          sanctum: []
+    post:
+      tags:
+        - Plan
+      summary: 'Create a new plan'
+      operationId: createPlan
+      parameters:
+        -
+          name: include
+          in: query
+          description: 'Include related documents'
+          required: false
+          schema:
+            enum:
+              - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                title:
+                  description: 'Title of the plan'
+                  type: string
+                  maxLength: 255
+                date:
+                  description: 'Date of the plan in format Y-m-d'
+                  type: string
+                  format: date
+              type: object
+      responses:
+        201:
+          description: 'Plan created successfully'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/planData'
+                  included:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/planDocumentData'
+                type: object
+        401:
+          $ref: '#/components/responses/unauthenticated'
+      security:
+        -
+          sanctum: []
+  '/plan/{id}':
+    get:
+      tags:
+        - Plan
+      summary: 'Get plan details'
+      operationId: getPlan
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'ID of the plan'
+          required: true
+          schema:
+            type: string
+        -
+          name: include
+          in: query
+          description: 'Include related documents'
+          required: false
+          schema:
+            enum:
+              - documents
+      responses:
+        200:
+          description: 'Successful operation'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/planData'
+                  included:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/planDocumentData'
+                type: object
+        401:
+          $ref: '#/components/responses/unauthenticated'
+        404:
+          description: 'Plan nicht gefunden'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: 'Plan nicht gefunden'
+                type: object
+      security:
+        -
+          sanctum: []
+    put:
+      tags:
+        - Plan
+      summary: 'Update a new plan'
+      operationId: updatePlan
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'ID of the plan to update'
+          required: true
+          schema:
+            type: string
+        -
+          name: include
+          in: query
+          description: 'Include related documents'
+          required: false
+          schema:
+            enum:
+              - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                title:
+                  description: 'Title of the plan'
+                  type: string
+                  maxLength: 255
+                date:
+                  description: 'Date of the plan in format Y-m-d'
+                  type: string
+                  format: date
+              type: object
+      responses:
+        201:
+          description: 'Plan created successfully'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/planData'
+                  included:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/planDocumentData'
+                type: object
+        401:
+          $ref: '#/components/responses/unauthenticated'
+        404:
+          description: 'Plan nicht gefunden'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: 'Plan nicht gefunden'
+                type: object
+      security:
+        -
+          sanctum: []
+    delete:
+      tags:
+        - Plan
+      summary: 'Delete a plan'
+      description: 'Deletes a plan'
+      operationId: deletePlan
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'ID of the plan to delete'
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: 'Plan erfolgreich gelöscht'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: 'Plan erfolgreich gelöscht'
+                type: object
+        404:
+          description: 'Plan nicht gefunden'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: 'Plan nicht gefunden'
+                type: object
+        401:
+          $ref: '#/components/responses/unauthenticated'
+      security:
+        -
+          sanctum: []
+  /plan-document:
+    post:
+      tags:
+        - 'Plan Document'
+      summary: 'Create a new plan document'
+      operationId: createPlanDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                planId:
+                  description: 'ID of the plan the document belongs to'
+                  type: string
+                  example: '1'
+                document:
+                  description: 'The document file to upload (JPEG, PNG, PDF, Excel)'
+                  type: string
+                  format: binary
+              type: object
+      responses:
+        201:
+          description: 'Document created successfully'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/planDocumentData'
+                type: object
+        422:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    example: 'The plan id field is required.'
+                  errors:
+                    properties:
+                      planId:
+                        type: array
+                        items:
+                          type: string
+                          example: 'The plan id field is required.'
+                      document:
+                        type: array
+                        items:
+                          type: string
+                          example: 'The document field is required.'
+                    type: object
+                type: object
+        401:
+          $ref: '#/components/responses/unauthenticated'
+      security:
+        -
+          sanctum: []
+  '/plan-document/{id}':
+    post:
+      tags:
+        - 'Plan Document'
+      summary: 'Update a plan document'
+      operationId: updatePlanDocument
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'ID of the plan document to update'
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - document
+                - _method
+              properties:
+                _method:
+                  type: string
+                  example: PUT
+                  enum:
+                    - PUT
+                document:
+                  description: 'The document to upload (JPEG, PNG, PDF, Excel)'
+                  type: string
+                  format: binary
+              type: object
+      responses:
+        201:
+          description: 'Document uploaded successfully'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/planDocumentData'
+                type: object
+        422:
+          description: 'Unprocessable Entity'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    example: 'The document field is required.'
+                  errors:
+                    properties:
+                      document:
+                        type: array
+                        items:
+                          type: string
+                          example: 'The document field is required.'
+                    type: object
+                type: object
+        404:
+          description: 'Plandokument nicht gefunden.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: 'Plandokument nicht gefunden.'
+                type: object
+        401:
+          $ref: '#/components/responses/unauthenticated'
+      security:
+        -
+          sanctum: []
+    delete:
+      tags:
+        - 'Plan Document'
+      summary: 'Delete a plan document'
+      operationId: deletePlanDocument
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'ID of the plan document to delete'
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: 'Dokument erfolgreich gelöscht'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: 'Dokument erfolgreich gelöscht'
+                type: object
+        404:
+          description: 'Plandokument nicht gefunden.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: 'Plandokument nicht gefunden.'
+                type: object
+        401:
+          $ref: '#/components/responses/unauthenticated'
+      security:
+        -
+          sanctum: []
+components:
+  schemas:
+    meta:
+      required:
+        - currentPage
+        - from
+        - lastPage
+        - links
+        - path
+        - perPage
+        - to
+        - total
+      properties:
+        currentPage:
+          description: 'The current page number'
+          type: integer
+          example: 1
+        from:
+          description: 'The index of the first item in the current page'
+          type: integer
+          example: 1
+        lastPage:
+          description: 'The total number of pages'
+          type: integer
+          example: 1
+        links:
+          required:
+            - url
+            - label
+            - active
+          type: array
+          items:
+            properties:
+              url:
+                description: 'The URL to the previous or next page'
+                type: string
+                nullable: true
+              label:
+                description: 'The label for the pagination link'
+                type: string
+                example: '&laquo; Previous'
+              active:
+                description: 'Whether the pagination link is active or not'
+                type: boolean
+                example: true
+            type: object
+        path:
+          description: 'The base path for the phase API'
+          type: string
+          example: 'http://localhost/api/phase'
+        perPage:
+          description: 'The number of phases per page'
+          type: integer
+          example: 20
+        to:
+          description: 'The index of the last item in the current page'
+          type: integer
+          example: 1
+        total:
+          description: 'The total number of phases'
+          type: integer
+          example: 1
+      type: object
+    links:
+      required:
+        - first
+        - last
+      properties:
+        first:
+          description: 'The URL to the first page of phases'
+          type: string
+          format: url
+          example: 'http://localhost/api/phase?page=1'
+        last:
+          description: 'The URL to the last page of phases'
+          type: string
+          format: url
+          example: 'http://localhost/api/phase?page=1'
+      type: object
+    planRelationships:
+      properties:
+        documents:
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                required:
+                  - type
+                  - id
+                properties:
+                  type:
+                    type: string
+                    example: planDocuments
+                    enum:
+                      - planDocuments
+                  id:
+                    type: string
+                    example: '1'
+                type: object
+          type: object
+      type: object
+    planData:
+      required:
+        - id
+        - type
+        - attributes
+      properties:
+        id:
+          description: 'ID of the created plan'
+          type: string
+        type:
+          description: 'Type of resource'
+          type: string
+          enum:
+            - planDocuments
+        attributes:
+          required:
+            - title
+            - date
+          properties:
+            title:
+              description: 'Title of the created plan'
+              type: string
+              nullable: true
+            date:
+              description: 'Date of the created plan'
+              type: string
+              nullable: true
+          type: object
+        relationships:
+          $ref: '#/components/schemas/planRelationships'
+      type: object
+    planDocumentData:
+      required:
+        - id
+        - type
+        - attributes
+      properties:
+        id:
+          type: string
+          example: '2'
+        type:
+          type: string
+          example: planDocuments
+          enum:
+            - planDocuments
+        attributes:
+          required:
+            - name
+            - url
+            - mime
+            - blurhash
+          properties:
+            name:
+              type: string
+              example: xtcwm92u3jv51.jpg
+            url:
+              type: string
+              example: plan-documents/Hxa6KRrnq9afRVHTddjCyR1aEHtLvPL0xLgOLUSi.jpg
+            mime:
+              enum:
+                - image/jpeg
+                - image/png
+                - application/pdf
+                - application/vnd.ms-excel
+                - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+              example: image/jpeg
+            blurhash:
+              type: string
+              example: 'LYCZR#ofa|oL~Vozf6oK^jkDaeof'
+              nullable: true
+          type: object
+      type: object
+  responses:
+    unauthenticated:
+      description: unauthenticated
+      content:
+        application/json:
+          schema:
+            required:
+              - message
+            properties:
+              message:
+                type: string
+                example: Unauthenticated.
+            type: object
+    internalServerError:
+      description: 'Server error'
+      content:
+        application/json:
+          schema:
+            required:
+              - message
+            properties:
+              message:
+                type: string
+                example: Unauthenticated.
+            type: object
+tags:
+  -
+    name: Authentication
+    description: Authentication
+  -
+    name: Plan
+    description: Plan
+  -
+    name: 'Plan Document'
+    description: 'Plan Document'
